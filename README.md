@@ -73,14 +73,15 @@ watch 名は RSS アイテムに出しません。`journals.yaml` がある場�
 
 ## Cursor Automation
 
-private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
+要旨訳はエージェントが行うので、定期実行は [Cursor Automations](https://cursor.com/automations)（cron）。GitHub Actions だけでは足りない。
 
-- cron: 1日1回
-- install: `uv sync`
+- 環境: **bibwatch + bibwatch-data + bibwatch-feed** の 3 repo（cron はデフォルトで repo なし）
+- cron: `0 22 * * *` UTC（日本時間 07:00）
+- Secrets: **`BIBWATCH_FEED_TOKEN` 必須**（`state/feed-token` は gitignore）。`NCBI_API_KEY` 任意
 - 実行: `uv run bibwatch run` → 新規要旨を日本語訳 → `translate apply` → `publish`
-- push: data 側は `docs/`, `state/`。`bibwatch-feed` は `docs/feeds/`
+- push: 変更があれば **両 repo の `main`**（Pages は feed の `main` / `/docs`）
 
-詳細: `skills/bibwatch-run/SKILL.md`
+手順と貼り付け用プロンプト: [`AUTOMATION.md`](AUTOMATION.md)。Skill: `skills/bibwatch-run/SKILL.md`
 
 ## Env
 
