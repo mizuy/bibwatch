@@ -11,14 +11,15 @@ Free GitHub cannot serve Pages from a private repo. Keep this repo private and p
 3. `uv sync`
 4. `uv run bibwatch init`
 5. Add watches under `watches/`
-6. Point `--pages-root` / `BIBWATCH_PAGES` at a public Pages checkout (user site or public project repo)
+6. Point `--pages-root` / `BIBWATCH_PAGES` at the public `bibwatch` checkout's `docs/`
+7. Enable GitHub Pages on **public** `bibwatch`: `main` / `/docs`
 
 ## Feed URL
 
 After `bibwatch run`:
 
 ```
-https://<user>.github.io/feeds/<token>/all.xml
+https://<user>.github.io/bibwatch/feeds/<token>/all.xml
 ```
 
 `<token>` = contents of `state/feed-token` (do not commit to public docs)

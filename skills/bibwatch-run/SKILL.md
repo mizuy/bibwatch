@@ -17,9 +17,9 @@ description: >-
 ## Steps
 
 1. `uv run bibwatch doctor` — fix blockers if any
-2. `uv run bibwatch run --site-base https://<user>.github.io --pages-root /path/to/public-pages`
-3. If `docs/` or `state/` changed: commit and push **bibwatch-data** `main`
-4. If `feeds/` changed: commit and push the **public Pages** repo
+2. `uv run bibwatch run --site-base https://<user>.github.io/bibwatch --pages-root /path/to/bibwatch/docs`
+3. If data `docs/` or `state/` changed: commit and push **bibwatch-data** `main`
+4. If public `docs/feeds/` changed: commit and push **bibwatch**
 5. Report: new paper count, feed path (do **not** log full secret URL in public artifacts)
 
 ## Do not

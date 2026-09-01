@@ -10,7 +10,7 @@
 |------|------|------|
 | **bibwatch** (この repo) | public | CLI・enrich・RSS 生成 |
 | **bibwatch-data** | private | `watches/`, `state/`（Pages は使わない） |
-| **公開 Pages サイト** | public | `feeds/<UUID>/all.xml` だけ置く |
+| **bibwatch `docs/`** | public | `feeds/<UUID>/all.xml`（Pages 用。private には置けない） |
 
 ## インストール
 
@@ -42,16 +42,16 @@ uv run bibwatch doctor
 
 ## RSS 配信
 
-GitHub の無料プランは **private repo に Pages を置けない**。watch / state は private のまま、feed XML だけ公開サイトへ出す。
+GitHub の無料プランは **private repo に Pages を置けない**。watch / state は private のまま、feed XML だけこの public repo の `docs/` へ出す。
 
 1. `bibwatch-data` は **private**（watch 定義・seen・papers）
-2. 公開 Pages がある repo（ユーザーサイト `username.github.io` / `username.github.com`、または専用の public repo）に `feeds/<UUID>/all.xml` を置く
-3. `BIBWATCH_PAGES` または `--pages-root` をその公開 checkout に向ける
+2. `BIBWATCH_PAGES` / `--pages-root` をこの repo の `docs/` に向ける
+3. GitHub Pages: この **public** repo の Settings → Pages → `main` / `/docs`
 4. feed URL（Inoreader 等）:
 
-   `https://<user>.github.io/feeds/<UUID>/all.xml`
+   `https://<user>.github.io/bibwatch/feeds/<UUID>/all.xml`
 
-   UUID は `state/feed-token`（public README に書かない）
+   UUID は `state/feed-token`（README 本文には書かない）
 
 ## RSS アイテム
 
@@ -68,8 +68,8 @@ private `bibwatch-data` と公開 Pages repo の両方を使う:
 
 - cron: 1日1回
 - install: `uv sync`
-- 実行: `uv run bibwatch run --site-base https://<user>.github.io --pages-root /path/to/public-pages`
-- push: data 側は `docs/`, `state/`。Pages 側は `feeds/` だけ
+- 実行: `uv run bibwatch run --site-base https://<user>.github.io/bibwatch --pages-root /path/to/bibwatch/docs`
+- push: data 側は `docs/`, `state/`。この repo は `docs/feeds/` だけ
 
 詳細: `skills/bibwatch-run/SKILL.md`
 
