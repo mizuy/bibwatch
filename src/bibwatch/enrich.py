@@ -31,6 +31,28 @@ COUNTRY_JA = {
     "NL": "オランダ",
     "SE": "スウェーデン",
     "SG": "シンガポール",
+    "TW": "台湾",
+    "IT": "イタリア",
+    "ES": "スペイン",
+    "AR": "アルゼンチン",
+    "RS": "セルビア",
+    "BR": "ブラジル",
+    "IN": "インド",
+    "BE": "ベルギー",
+    "DK": "デンマーク",
+    "NO": "ノルウェー",
+    "FI": "フィンランド",
+    "AT": "オーストリア",
+    "PT": "ポルトガル",
+    "PL": "ポーランド",
+    "CZ": "チェコ",
+    "GR": "ギリシャ",
+    "IL": "イスラエル",
+    "TR": "トルコ",
+    "MX": "メキシコ",
+    "NZ": "ニュージーランド",
+    "IE": "アイルランド",
+    "HK": "香港",
 }
 
 
@@ -165,6 +187,10 @@ def enrich_paper(paper: Paper) -> Paper:
             affs = _affiliations_from_openalex(oa)
             if affs:
                 paper.affiliations = affs
+            oa_doi = normalize_doi(oa.get("doi"))
+            if oa_doi:
+                paper.ids["doi"] = oa_doi
+                paper.urls["doi"] = f"https://doi.org/{oa_doi}"
             if not paper.abstract.original:
                 inv = oa.get("abstract_inverted_index")
                 if isinstance(inv, dict):
@@ -178,7 +204,7 @@ def enrich_paper(paper: Paper) -> Paper:
                     paper.journal = j
                 if affs and not paper.affiliations:
                     paper.affiliations = affs
-                if abstract and not paper.abstract.original:
+                if abstract and len(abstract) > len(paper.abstract.original or ""):
                     paper.abstract.original = abstract
 
     return paper
