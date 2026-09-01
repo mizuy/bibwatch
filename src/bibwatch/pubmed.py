@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from bibwatch.models import Abstract, Journal, Paper
+from bibwatch.models import Abstract, Author, Journal, Paper
 from bibwatch.store import normalize_doi, paper_id_from_ids
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -64,6 +64,34 @@ def _pub_date(article: ET.Element) -> str | None:
         return datetime(int(year), int(month), int(day)).date().isoformat()
     except ValueError:
         return year
+
+
+def authors_from_article(article: ET.Element) -> list[Author]:
+    authors: list[Author] = []
+    for au in article.findall("./AuthorList/Author"):
+        collective = _text(au.find("CollectiveName"))
+        if collective:
+            authors.append(Author(name=collective))
+            continue
+        last = _text(au.find("LastName"))
+        first = _text(au.find("ForeName"))
+        initials = _text(au.find("Initials"))
+        name = " ".join(p for p in (last, first) if p) or initials
+        if not name:
+            continue
+        authors.append(Author(name=name, last=last, first=first, initials=initials))
+    return authors
+
+
+def authors_from_pubmed_xml(xml_text: str) -> list[Author]:
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return []
+    article = root.find(".//Article")
+    if article is None:
+        return []
+    return authors_from_article(article)
 
 
 def _abstract(article: ET.Element) -> str | None:
@@ -125,6 +153,7 @@ def paper_from_pubmed_article(article_el: ET.Element, watch_id: str) -> Paper | 
         id=paper_id,
         title=title,
         watch_ids=[watch_id],
+        authors=authors_from_article(article),
         journal=journal,
         abstract=Abstract(original=_abstract(article)),
         urls=urls,

@@ -46,6 +46,38 @@ class Affiliation:
 
 
 @dataclass
+class Author:
+    name: str
+    last: str | None = None
+    first: str | None = None
+    initials: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {k: v for k, v in self.__dict__.items() if v is not None}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | str | None) -> Author | None:
+        if not data:
+            return None
+        if isinstance(data, str):
+            name = data.strip()
+            return cls(name=name) if name else None
+        name = str(data.get("name") or "").strip()
+        if not name:
+            last = str(data.get("last") or "").strip()
+            first = str(data.get("first") or "").strip()
+            name = " ".join(p for p in (last, first) if p)
+        if not name:
+            return None
+        return cls(
+            name=name,
+            last=(str(data["last"]).strip() if data.get("last") else None),
+            first=(str(data["first"]).strip() if data.get("first") else None),
+            initials=(str(data["initials"]).strip() if data.get("initials") else None),
+        )
+
+
+@dataclass
 class Abstract:
     original: str | None = None
     ja: str | None = None
@@ -76,6 +108,7 @@ class Paper:
     id: str
     title: str
     watch_ids: list[str] = field(default_factory=list)
+    authors: list[Author] = field(default_factory=list)
     journal: Journal = field(default_factory=Journal)
     affiliations: list[Affiliation] = field(default_factory=list)
     abstract: Abstract = field(default_factory=Abstract)
@@ -88,6 +121,7 @@ class Paper:
             "id": self.id,
             "title": self.title,
             "watch_ids": self.watch_ids,
+            "authors": [a.to_dict() for a in self.authors],
             "journal": self.journal.to_dict(),
             "affiliations": [a.to_dict() for a in self.affiliations],
             "abstract": self.abstract.to_dict(),
@@ -102,6 +136,7 @@ class Paper:
             id=data["id"],
             title=data["title"],
             watch_ids=list(data.get("watch_ids") or []),
+            authors=[a for a in (Author.from_dict(x) for x in (data.get("authors") or [])) if a],
             journal=Journal.from_dict(data.get("journal")),
             affiliations=[Affiliation.from_dict(a) for a in (data.get("affiliations") or [])],
             abstract=Abstract.from_dict(data.get("abstract")),

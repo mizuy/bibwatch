@@ -28,6 +28,35 @@ def _pub_date(paper: Paper) -> str:
     return format_datetime(datetime.now(timezone.utc))
 
 
+def year_month(published: str | None) -> str | None:
+    if not published:
+        return None
+    text = str(published).strip()
+    if len(text) >= 7 and text[4] == "-" and text[:4].isdigit():
+        return text[:7]
+    if len(text) >= 4 and text[:4].isdigit():
+        return text[:4]
+    return None
+
+
+def journal_label(paper: Paper) -> str | None:
+    j = paper.journal
+    if j.type == "preprint":
+        return j.name or "プレプリント"
+    return j.name or j.iso_abbrev or None
+
+
+def item_title(paper: Paper) -> str:
+    parts = [paper.title.strip() or "Untitled"]
+    journal = journal_label(paper)
+    if journal:
+        parts.append(journal)
+    ym = year_month(paper.journal.published)
+    if ym:
+        parts.append(ym)
+    return " / ".join(parts)
+
+
 def _item_link(paper: Paper) -> str:
     if paper.urls.get("doi"):
         return paper.urls["doi"]
@@ -43,6 +72,17 @@ def _if_label(listed: ListedJournal | None) -> str | None:
     if listed.if_2025_flag:
         text += listed.if_2025_flag
     return text
+
+
+def _authors_html(paper: Paper) -> str:
+    parts = ['<section class="authors"><h4>著者</h4>']
+    if paper.authors:
+        names = ", ".join(html.escape(a.name) for a in paper.authors if a.name)
+        parts.append(f"<p>{names}</p>")
+    else:
+        parts.append("<p>取得できず</p>")
+    parts.append("</section>")
+    return "".join(parts)
 
 
 def _description_html(paper: Paper, listed: ListedJournal | None = None) -> str:
@@ -74,6 +114,8 @@ def _description_html(paper: Paper, listed: ListedJournal | None = None) -> str:
     else:
         parts.append("<p>不明</p>")
     parts.append("</section>")
+
+    parts.append(_authors_html(paper))
 
     parts.append('<section class="affiliations"><h4>所属・国</h4>')
     if paper.affiliations:
@@ -133,7 +175,7 @@ def build_rss(
 
     for paper in papers:
         item = ET.SubElement(channel, "item")
-        ET.SubElement(item, "title").text = paper.title
+        ET.SubElement(item, "title").text = item_title(paper)
         ET.SubElement(item, "link").text = _item_link(paper)
         ET.SubElement(item, "guid", attrib={"isPermaLink": "false"}).text = paper.id
         ET.SubElement(item, "pubDate").text = _pub_date(paper)

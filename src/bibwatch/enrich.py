@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import Any
 
 import httpx
 
-from bibwatch.models import Affiliation, Journal, Paper
-from bibwatch.store import normalize_doi
+from bibwatch.models import Affiliation, Author, Journal, Paper
+from bibwatch.pubmed import authors_from_article, authors_from_pubmed_xml, fetch_pubmed_articles
+from bibwatch.store import list_papers, normalize_doi, save_paper
 
 COUNTRY_JA = {
     "US": "アメリカ",
@@ -77,6 +79,15 @@ def _openalex_work(client: httpx.Client, paper: Paper) -> dict[str, Any] | None:
     return resp.json()
 
 
+def _authors_from_openalex(data: dict[str, Any]) -> list[Author]:
+    out: list[Author] = []
+    for authorship in data.get("authorships") or []:
+        name = ((authorship.get("author") or {}).get("display_name") or "").strip()
+        if name:
+            out.append(Author(name=name))
+    return out
+
+
 def _affiliations_from_openalex(data: dict[str, Any]) -> list[Affiliation]:
     seen: set[tuple[str, str | None]] = set()
     out: list[Affiliation] = []
@@ -126,7 +137,7 @@ def _pubmed_efetch(client: httpx.Client, pmid: str) -> dict[str, Any] | None:
     return {"xml": resp.text}
 
 
-def _parse_pubmed_xml(xml_text: str) -> tuple[Journal | None, list[Affiliation], str | None]:
+def _parse_pubmed_xml(xml_text: str) -> tuple[Journal | None, list[Affiliation], str | None, list[Author]]:
     journal = None
     affiliations: list[Affiliation] = []
     abstract_parts: list[str] = []
@@ -164,7 +175,8 @@ def _parse_pubmed_xml(xml_text: str) -> tuple[Journal | None, list[Affiliation],
         seen.add(key)
         deduped.append(a)
 
-    return journal, deduped, abstract
+    authors = authors_from_pubmed_xml(xml_text)
+    return journal, deduped, abstract, authors
 
 
 def _guess_country_from_affiliation(text: str) -> str | None:
@@ -187,6 +199,10 @@ def enrich_paper(paper: Paper) -> Paper:
             affs = _affiliations_from_openalex(oa)
             if affs:
                 paper.affiliations = affs
+            if not paper.authors:
+                oa_authors = _authors_from_openalex(oa)
+                if oa_authors:
+                    paper.authors = oa_authors
             oa_doi = normalize_doi(oa.get("doi"))
             if oa_doi:
                 paper.ids["doi"] = oa_doi
@@ -199,11 +215,13 @@ def enrich_paper(paper: Paper) -> Paper:
         if pmid := paper.ids.get("pmid"):
             raw = _pubmed_efetch(client, pmid)
             if raw and raw.get("xml"):
-                j, affs, abstract = _parse_pubmed_xml(raw["xml"])
+                j, affs, abstract, authors = _parse_pubmed_xml(raw["xml"])
                 if j and j.name and (not paper.journal.name or paper.journal.type == "preprint"):
                     paper.journal = j
                 if affs and not paper.affiliations:
                     paper.affiliations = affs
+                if authors:
+                    paper.authors = authors
                 if abstract and len(abstract) > len(paper.abstract.original or ""):
                     paper.abstract.original = abstract
 
@@ -219,3 +237,38 @@ def _reconstruct_openalex_abstract(inverted: dict[str, list[int]]) -> str:
         for i in indices:
             words[i] = word
     return " ".join(words)
+
+
+def fill_missing_authors(root: Path) -> int:
+    """Backfill author lists from PubMed for stored papers that lack them."""
+    import time
+
+    need = [p for p in list_papers(root) if not p.authors and p.ids.get("pmid")]
+    updated = 0
+    for i in range(0, len(need), 50):
+        batch = need[i : i + 50]
+        pmids = [p.ids["pmid"] for p in batch]
+        xml_root = fetch_pubmed_articles(pmids)
+        by_pmid: dict[str, list[Author]] = {}
+        for article_el in xml_root.findall("PubmedArticle"):
+            medline = article_el.find("MedlineCitation")
+            article = medline.find("Article") if medline is not None else None
+            if medline is None or article is None:
+                continue
+            pmid_el = medline.find("PMID")
+            pmid = (pmid_el.text or "").strip() if pmid_el is not None else ""
+            if not pmid:
+                continue
+            authors = authors_from_article(article)
+            if authors:
+                by_pmid[pmid] = authors
+        for paper in batch:
+            authors = by_pmid.get(paper.ids.get("pmid") or "")
+            if not authors:
+                continue
+            paper.authors = authors
+            save_paper(root, paper)
+            updated += 1
+        if i + 50 < len(need):
+            time.sleep(0.34)
+    return updated

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from bibwatch.enrich import enrich_paper
+from bibwatch.enrich import enrich_paper, fill_missing_authors
 from bibwatch.feeds import DEFAULT_FEEDS, FeedSpec, load_feeds
 from bibwatch.journals import ListedJournal, filter_listed_papers, load_journal_catalog, prioritize_papers
 from bibwatch.models import Paper
@@ -50,8 +50,13 @@ def poll_new_papers(root: Path, *, watch_id: str | None = None, dry_run: bool = 
             if paper.id in seen:
                 if existing:
                     merged = _merge_watch_ids(existing, paper)
-                    if merged != existing.watch_ids and not dry_run:
+                    changed = merged != existing.watch_ids
+                    if changed:
                         existing.watch_ids = merged
+                    if not existing.authors and paper.authors:
+                        existing.authors = paper.authors
+                        changed = True
+                    if changed and not dry_run:
                         save_paper(root, existing)
                 continue
             paper.watch_ids = _merge_watch_ids(existing, paper)
@@ -182,6 +187,12 @@ def run_all(
 
     if new_papers:
         ingest_papers(root, new_papers, dry_run=dry_run)
+
+    if not dry_run:
+        try:
+            fill_missing_authors(root)
+        except Exception as e:
+            errors.append(f"authors: {e}")
 
     feed_path = None
     feed_paths: list[Path] = []

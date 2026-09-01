@@ -17,6 +17,18 @@ SAMPLE = """
         <Title>The American journal of surgical pathology</Title>
         <ISOAbbreviation>Am J Surg Pathol</ISOAbbreviation>
       </Journal>
+      <AuthorList>
+        <Author>
+          <LastName>Sekine</LastName>
+          <ForeName>Shigeki</ForeName>
+          <Initials>S</Initials>
+        </Author>
+        <Author>
+          <LastName>Saito</LastName>
+          <ForeName>Yutaka</ForeName>
+          <Initials>Y</Initials>
+        </Author>
+      </AuthorList>
       <ArticleTitle>TSA and <i>RSPO</i> fusion</ArticleTitle>
       <ELocationID EIdType="doi">10.1097/PAS.0000000000002586</ELocationID>
       <Abstract>
@@ -43,4 +55,5 @@ def test_paper_from_pubmed_article():
     assert paper.journal.iso_abbrev == "Am J Surg Pathol"
     assert paper.journal.published == "2026-07-03"
     assert "RSPO" in paper.title
+    assert [a.name for a in paper.authors] == ["Sekine Shigeki", "Saito Yutaka"]
     assert paper.abstract.original and paper.abstract.original.startswith("BACKGROUND")
