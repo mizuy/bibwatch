@@ -15,7 +15,7 @@ from bibwatch.publish import publish_feed
 from bibwatch.rss import build_rss
 from bibwatch.store import load_paper, load_seen, list_papers, mark_seen, save_paper
 from bibwatch.translate import translate_paper_abstract
-from bibwatch.watch import load_watches
+from bibwatch.watch import load_all_watches, load_watches, matches_require_tiab, paper_matches_watch
 
 
 @dataclass
@@ -42,6 +42,8 @@ def poll_new_papers(root: Path, *, watch_id: str | None = None, dry_run: bool = 
     for watch in load_watches(root, watch_id=watch_id):
         try:
             fetched = poll_watch_feeds(watch.id, watch.feeds)
+            if watch.require_tiab:
+                fetched = [p for p in fetched if matches_require_tiab(p, watch.require_tiab)]
         except Exception as e:
             errors.append(f"{watch.id}: {e}")
             continue
@@ -84,18 +86,23 @@ def active_watch_ids(root: Path) -> set[str]:
 
 
 def theme_papers(root: Path) -> list[Paper]:
-    active = active_watch_ids(root)
-    papers = list_papers(root)
-    if not active:
-        return papers
-    return [p for p in papers if set(p.watch_ids) & active]
+    return papers_matching_watches(root, None)
 
 
 def papers_matching_watches(root: Path, watch_ids: tuple[str, ...] | None) -> list[Paper]:
-    if watch_ids is None:
-        return theme_papers(root)
-    wanted = set(watch_ids)
-    return [p for p in list_papers(root) if set(p.watch_ids) & wanted]
+    wanted = set(watch_ids) if watch_ids is not None else active_watch_ids(root)
+    papers = list_papers(root)
+    if not wanted:
+        return papers if watch_ids is None else []
+    by_id = {w.id: w for w in load_all_watches(root)}
+    kept: list[Paper] = []
+    for paper in papers:
+        for wid in set(paper.watch_ids) & wanted:
+            watch = by_id.get(wid)
+            if watch is None or paper_matches_watch(paper, watch):
+                kept.append(paper)
+                break
+    return kept
 
 
 def catalog_for_feed(root: Path, spec: FeedSpec) -> list[ListedJournal] | None:

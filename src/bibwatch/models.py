@@ -152,16 +152,21 @@ class Watch:
     title: str
     enabled: bool = True
     feeds: list[dict[str, str]] = field(default_factory=list)
+    require_tiab: list[str] = field(default_factory=list)
     translate: dict[str, Any] = field(default_factory=dict)
     rss: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Watch:
+        require = data.get("require_tiab") or []
+        if isinstance(require, str):
+            require = [require]
         return cls(
             id=data["id"],
             title=data.get("title") or data["id"],
             enabled=bool(data.get("enabled", True)),
             feeds=list(data.get("feeds") or []),
+            require_tiab=[str(p).strip() for p in require if str(p).strip()],
             translate=dict(data.get("translate") or {}),
             rss=dict(data.get("rss") or {}),
         )

@@ -3,7 +3,7 @@ from pathlib import Path
 from bibwatch.feeds import DEFAULT_FEEDS, load_feeds
 from bibwatch.init_data import init_data_root
 from bibwatch.journals import load_journal_catalog
-from bibwatch.models import Journal, Paper
+from bibwatch.models import Abstract, Journal, Paper
 from bibwatch.run import papers_for_feed, run_all
 from bibwatch.store import save_paper
 
@@ -117,6 +117,37 @@ feeds:
     xml = (public / "susa.xml").read_text(encoding="utf-8")
     assert "<title>SuSA</title>" in xml
     assert "doi:susa" in xml
+
+
+def test_require_tiab_drops_single_token_hits(tmp_path: Path):
+    init_data_root(tmp_path, feed_token="test-token-uuid-12345678")
+    (tmp_path / "watches" / "w-susa.yaml").write_text(
+        """
+id: w-susa
+title: SuSA
+enabled: true
+feeds: []
+require_tiab:
+  - superficially serrated adenoma
+  - superficial serrated adenoma
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "feeds.yaml").write_text(
+        "feeds:\n  - id: susa\n    filename: susa.xml\n    watches: [w-susa]\n",
+        encoding="utf-8",
+    )
+    keep = _paper("doi:keep", "Gut", watches=["w-susa"])
+    keep.title = "A case of superficially serrated adenoma"
+    keep.abstract = Abstract(original="We resected a SuSA.")
+    drop = _paper("doi:drop", "Plants", watches=["w-susa"])
+    drop.title = "Herbs of the Upper Susa Valley"
+    drop.abstract = Abstract(original="SUSA is an alpine valley.")
+    save_paper(tmp_path, keep)
+    save_paper(tmp_path, drop)
+    specs = {s.id: s for s in load_feeds(tmp_path)}
+    ids = [p.id for p in papers_for_feed(tmp_path, specs["susa"])]
+    assert ids == ["doi:keep"]
 
 
 def test_load_catalog_custom_path(tmp_path: Path):

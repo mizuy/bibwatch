@@ -194,7 +194,15 @@ def poll_watch_feeds(watch_id: str, feeds: list[dict[str, str]]) -> list[Paper]:
     papers: list[Paper] = []
     for feed in feeds:
         if feed.get("type") == "pubmed_search":
-            papers.extend(poll_pubmed_search(watch_id, feed))
+            fetched = poll_pubmed_search(watch_id, feed)
+            require = feed.get("require_tiab") or []
+            if isinstance(require, str):
+                require = [require]
+            if require:
+                from bibwatch.watch import matches_require_tiab
+
+                fetched = [p for p in fetched if matches_require_tiab(p, list(require))]
+            papers.extend(fetched)
             continue
         url = feed.get("url")
         if not url:
