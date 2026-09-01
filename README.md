@@ -75,7 +75,7 @@ watch 名は RSS アイテムに出しません。`journals.yaml` がある場�
 
 要旨訳はエージェントが行うので、定期実行は [Cursor Automations](https://cursor.com/automations)（cron）。GitHub Actions だけでは足りない。
 
-- 環境: **bibwatch + bibwatch-data + bibwatch-feed** の 3 repo（cron はデフォルトで repo なし）
+- Repository: Scheduled の初期値は No repository。`mizuy/bibwatch` / `bibwatch-data` / `bibwatch-feed` の 3 つを選ぶ（画面が Environment を要求したら、先に同じ 3 つで Environment を作る）
 - cron: `0 22 * * *` UTC（日本時間 07:00）
 - Secrets: **`BIBWATCH_FEED_TOKEN` 必須**（`state/feed-token` は gitignore）。`NCBI_API_KEY` 任意
 - 実行: `uv run bibwatch run` → 新規要旨を日本語訳 → `translate apply` → `publish`

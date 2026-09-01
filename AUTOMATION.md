@@ -1,34 +1,47 @@
 # Daily feed: Cursor Automation
 
-要旨の日本語訳はエージェントが行う（DeepL は使わない）。GitHub Actions だけでは訳できないので、定期更新は **Cursor Automations**（[cursor.com/automations](https://cursor.com/automations)）で回す。
+要旨の日本語訳はエージェントが行う（DeepL は使わない）。GitHub Actions だけでは訳できないので、定期更新は **Cursor Automations** で回す。
 
 このクラウドエージェントから Automation を新規作成する API はない。ダッシュボードか、手元 Cursor の `/automate` で作る。
 
-## 1. Cloud Agents 環境（必須・複数 repo）
+## 「Environment」とは何か
 
-cron はデフォルトで **リポジトリなし**。コードを書いて push するには環境を明示する。
+GitHub の設定ではない。Cursor が毎回起こす **作業用マシンの中身** のこと。
 
-[Cloud Agents の Environments](https://cursor.com/dashboard?tab=cloud-agents) で次の 3 つを同じ環境に入れる。
+- 毎日の Automation は、デフォルトだと **どの GitHub リポジトリもクローンしない**（Slack 通知だけならコードが要らないため）
+- そのままだと `bibwatch run` も push もできない
+- だから「この 3 つの GitHub リポジトリをマシンに置いて動かす」と指定する
 
-| repo | 役割 |
-|------|------|
-| [mizuy/bibwatch](https://github.com/mizuy/bibwatch) | CLI |
-| [mizuy/bibwatch-data](https://github.com/mizuy/bibwatch-data) | watches / state（private） |
-| [mizuy/bibwatch-feed](https://github.com/mizuy/bibwatch-feed) | 公開 RSS（Pages） |
+| クローンする repo | 役割 |
+|-------------------|------|
+| `mizuy/bibwatch` | CLI |
+| `mizuy/bibwatch-data` | watches / state（private） |
+| `mizuy/bibwatch-feed` | 公開 RSS（Pages） |
 
-Install（環境の `install`、または data 側 `.cursor/environment.json`）:
+やり方は次のどちらか。**A だけで足りることが多い。** A の画面に Environment を選べと出たら B を先にやる。
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
-cd bibwatch-data && uv sync
-```
+### A. Automation 作成画面で 3 つ選ぶ（先に試す）
 
-Egress を絞る場合は少なくとも `eutils.ncbi.nlm.nih.gov`、`api.openalex.org`、`github.com`、`api.github.com` を許可する。
+1. Automations の新規作成を開く
+2. Trigger を **Scheduled** にする（時刻は後述）
+3. **Repository**（または Environment / Where should this run）を探す
+4. 初期値の **No repository** のままにしない
+5. **Multiple repositories**（または Multi-repo environment）を選ぶ
+6. 上の 3 リポジトリにチェックを入れて保存
 
-## 2. Runtime Secrets
+これで「3 つの repo を入れる」は完了。別画面で Environment を作る必要はない。
 
-Cloud Agents の Runtime Secrets（Automation 作成画面でも可）。
+### B. A で Environment を先に作れと言われたとき
+
+1. Cloud Agents ダッシュボード → **Environments** → 新規
+2. GitHub 連携を求められたら接続する
+3. リポジトリ選択で **同じ 3 つ** をまとめて選ぶ（1 つだけだと不足）
+4. 名前は `bibwatch` でよい。Install は空でも、エージェントが `uv sync` する
+5. 保存したら A に戻り、その Environment を選ぶ
+
+Secrets の `BIBWATCH_FEED_TOKEN` は、この Environment か Automation の Runtime Secrets に置く。
+
+## Secrets
 
 | 名前 | 必須 | 内容 |
 |------|------|------|
@@ -37,18 +50,17 @@ Cloud Agents の Runtime Secrets（Automation 作成画面でも可）。
 
 `DEEPL_API_KEY` は不要。
 
-## 3. Automation を作る
+## Automation の残り
 
-1. [cursor.com/automations/new](https://cursor.com/automations/new)
-2. Trigger: **Scheduled** → cron `0 22 * * *`（UTC = 日本時間 07:00）
-3. Repository: 上の **multi-repo 環境**（単一 repo や「なし」にしない）
-4. Tools: Memories は任意。PR 作成ツールはデフォルト ON のままでよい（通常は main へ push し、拒否されたときだけ PR）
-5. Prompt: 下のブロックをそのまま貼る
-6. Save / Activate
+1. Trigger: **Scheduled** → cron `0 22 * * *`（UTC = 日本時間 07:00）
+2. Repository: 上の A または B（単一 repo や No repository にしない）
+3. Tools: Memories は任意。PR 作成ツールはデフォルト ON のままでよい（通常は main へ push し、拒否されたときだけ PR）
+4. Prompt: 下のブロックをそのまま貼る
+5. Save / Activate
 
-手元の Cursor なら `/automate` に「毎日 UTC 22:00、3 repo 環境で bibwatch の daily ingest。プロンプトは bibwatch の AUTOMATION.md」と書けば同じ設定になる。
+手元の Cursor なら `/automate` に「毎日 UTC 22:00、bibwatch / bibwatch-data / bibwatch-feed の 3 リポジトリで daily ingest。プロンプトは AUTOMATION.md」と書けば同じ設定になる。
 
-## 4. 貼り付け用プロンプト
+## 貼り付け用プロンプト
 
 ```
 You run the daily bibwatch literature ingest. Follow skills/bibwatch-run/SKILL.md and bibwatch-data/AGENTS.md.
@@ -82,7 +94,7 @@ Steps:
 10. Summary: new paper count, abstracts translated, whether main was updated. Do not print the full secret feed URL.
 ```
 
-## 5. 動作確認
+## 動作確認
 
 - 初回は Automation 画面の **Run now** で一度回す
 - 成功: `bibwatch-data` と `bibwatch-feed` の `main` に `feed: YYYY-MM-DD (N new)` が載る
