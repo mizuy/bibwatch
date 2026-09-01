@@ -64,20 +64,52 @@ def _extract_arxiv(link: str | None, entry_id: str | None) -> str | None:
     return None
 
 
+def _entry_html_chunks(entry: Any) -> list[str]:
+    chunks: list[str] = []
+    for content in getattr(entry, "content", None) or []:
+        value = content.get("value") if isinstance(content, dict) else getattr(content, "value", None)
+        if value:
+            chunks.append(str(value))
+    for attr in ("summary", "description"):
+        value = getattr(entry, attr, None)
+        if value:
+            chunks.append(str(value))
+    return chunks
+
+
+def _html_to_text(html: str) -> str:
+    text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", html)
+    text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _abstract_from_pubmed_html(html: str) -> str:
+    text = _html_to_text(html)
+    for marker in ("ABSTRACT", "Abstract"):
+        idx = text.find(marker)
+        if idx >= 0 and idx < 400:
+            rest = text[idx + len(marker) :].strip(" :")
+            if len(rest) > 40:
+                return rest
+    return text
+
+
 def _parse_pubmed_item(entry: Any, watch_id: str) -> Paper:
     title = (getattr(entry, "title", None) or "").strip()
+    chunks = _entry_html_chunks(entry)
+    body = max(chunks, key=len) if chunks else ""
     summary = (getattr(entry, "summary", None) or getattr(entry, "description", None) or "").strip()
     link = _first_link(entry)
     pmid = _extract_pmid(link) or _extract_pmid(getattr(entry, "id", ""))
-    doi = _extract_doi_from_text(summary) or _extract_doi_from_text(title)
+    doi = _extract_doi_from_text(body) or _extract_doi_from_text(summary) or _extract_doi_from_text(title)
 
     journal_name = None
-    m = re.search(r"<strong>Source:</strong>\s*([^<]+)", summary)
+    m = re.search(r"<strong>Source:</strong>\s*([^<]+)", body or summary)
     if m:
         journal_name = m.group(1).strip()
 
-    abstract_original = re.sub(r"<[^>]+>", " ", summary)
-    abstract_original = re.sub(r"\s+", " ", abstract_original).strip()
+    abstract_original = _abstract_from_pubmed_html(body or summary)
 
     paper_id = paper_id_from_ids(doi=doi, pmid=pmid, title=title)
     ids: dict[str, str] = {}
