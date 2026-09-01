@@ -9,7 +9,8 @@
 | repo | 公開 | 内容 |
 |------|------|------|
 | **bibwatch** (この repo) | public | CLI・enrich・RSS 生成 |
-| **bibwatch-data** | private | `watches/`, `state/`, `docs/feeds/<UUID>/` |
+| **bibwatch-data** | private | `watches/`, `state/`（Pages は使わない） |
+| **公開 Pages サイト** | public | `feeds/<UUID>/all.xml` だけ置く |
 
 ## インストール
 
@@ -35,19 +36,22 @@ export BIBWATCH_DATA=$PWD
 
 uv run bibwatch watch list
 uv run bibwatch poll --dry-run
-uv run bibwatch run --site-base https://<user>.github.io/bibwatch-data
+uv run bibwatch run --site-base https://<user>.github.io --pages-root /path/to/public-pages
 uv run bibwatch doctor
 ```
 
 ## RSS 配信
 
-1. `bibwatch-data` を **private repo** にする
-2. GitHub Pages: `main` / **`/docs`**
-3. feed URL（Inoreader 等）:
+GitHub の無料プランは **private repo に Pages を置けない**。watch / state は private のまま、feed XML だけ公開サイトへ出す。
 
-   `https://<user>.github.io/bibwatch-data/feeds/<UUID>/all.xml`
+1. `bibwatch-data` は **private**（watch 定義・seen・papers）
+2. 公開 Pages がある repo（ユーザーサイト `username.github.io` / `username.github.com`、または専用の public repo）に `feeds/<UUID>/all.xml` を置く
+3. `BIBWATCH_PAGES` または `--pages-root` をその公開 checkout に向ける
+4. feed URL（Inoreader 等）:
 
-   UUID は `state/feed-token`（README に書かない）
+   `https://<user>.github.io/feeds/<UUID>/all.xml`
+
+   UUID は `state/feed-token`（public README に書かない）
 
 ## RSS アイテム
 
@@ -60,12 +64,12 @@ watch 名は RSS に出しません。
 
 ## Cursor Automation
 
-private `bibwatch-data` repo に Automation を設定:
+private `bibwatch-data` と公開 Pages repo の両方を使う:
 
 - cron: 1日1回
 - install: `uv sync`
-- 実行: `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-data`
-- push: `docs/`, `state/`
+- 実行: `uv run bibwatch run --site-base https://<user>.github.io --pages-root /path/to/public-pages`
+- push: data 側は `docs/`, `state/`。Pages 側は `feeds/` だけ
 
 詳細: `skills/bibwatch-run/SKILL.md`
 
@@ -75,6 +79,7 @@ private `bibwatch-data` repo に Automation を設定:
 |----------|---------|
 | `BIBWATCH_DATA` | data ルート（未設定時 cwd） |
 | `BIBWATCH_FEED_TOKEN` | feed UUID（未設定時 `state/feed-token`） |
+| `BIBWATCH_PAGES` | 公開 Pages checkout（`feeds/<UUID>/all.xml` を書く） |
 | `DEEPL_API_KEY` | abstract 翻訳（任意） |
 | `NCBI_API_KEY` | PubMed enrich（任意） |
 

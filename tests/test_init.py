@@ -16,10 +16,18 @@ def test_init_and_run_empty(tmp_path: Path):
         "id: w-test\ntitle: Test\nenabled: false\nfeeds: []\n",
         encoding="utf-8",
     )
-    result = run_all(tmp_path, site_base="https://example.github.io/data")
+    pages = tmp_path / "public-pages"
+    result = run_all(
+        tmp_path,
+        site_base="https://example.github.io",
+        pages_root=pages,
+    )
     assert result.new_count == 0
     assert result.feed_path is not None
     assert result.feed_path.name == "all.xml"
+    public_feed = pages / "feeds" / "test-token-uuid-12345678" / "all.xml"
+    assert public_feed.is_file()
+    assert public_feed.read_text(encoding="utf-8") == result.feed_path.read_text(encoding="utf-8")
 
     issues = run_doctor(tmp_path)
     assert issues == []

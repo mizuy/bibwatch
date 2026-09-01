@@ -1,6 +1,8 @@
 # bibwatch-data
 
-Private watches and RSS output. Pair with public [bibwatch](https://github.com/mizuy/bibwatch).
+Private watches and ingest state. Pair with public [bibwatch](https://github.com/mizuy/bibwatch).
+
+Free GitHub cannot serve Pages from a private repo. Keep this repo private and publish only `feeds/<token>/all.xml` to a **public** Pages site.
 
 ## Setup
 
@@ -9,14 +11,14 @@ Private watches and RSS output. Pair with public [bibwatch](https://github.com/m
 3. `uv sync`
 4. `uv run bibwatch init`
 5. Add watches under `watches/`
-6. GitHub Pages: Settings → Pages → `/docs`
+6. Point `--pages-root` / `BIBWATCH_PAGES` at a public Pages checkout (user site or public project repo)
 
 ## Feed URL
 
 After `bibwatch run`:
 
 ```
-https://<user>.github.io/bibwatch-data/feeds/<token>/all.xml
+https://<user>.github.io/feeds/<token>/all.xml
 ```
 
 `<token>` = contents of `state/feed-token` (do not commit to public docs)

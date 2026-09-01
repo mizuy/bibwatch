@@ -7,6 +7,7 @@ from pathlib import Path
 
 ENV_DATA_ROOT = "BIBWATCH_DATA"
 ENV_FEED_TOKEN = "BIBWATCH_FEED_TOKEN"
+ENV_PAGES_ROOT = "BIBWATCH_PAGES"
 
 
 def resolve_data_root(explicit: Path | None = None) -> Path:
@@ -61,3 +62,17 @@ def feed_token(root: Path) -> str:
 
 def feed_publish_dir(root: Path) -> Path:
     return docs_dir(root) / "feeds" / feed_token(root)
+
+
+def resolve_pages_root(explicit: Path | None = None) -> Path | None:
+    """Public GitHub Pages checkout (feeds/ is written here). Private repos cannot host Pages on the free plan."""
+    if explicit is not None:
+        return explicit.expanduser().resolve()
+    env = os.environ.get(ENV_PAGES_ROOT, "").strip()
+    if env:
+        return Path(env).expanduser().resolve()
+    return None
+
+
+def pages_feed_dir(pages_root: Path, root: Path) -> Path:
+    return pages_root.expanduser().resolve() / "feeds" / feed_token(root)
