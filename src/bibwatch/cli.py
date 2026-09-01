@@ -37,7 +37,13 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument(
         "--site-base",
         default=None,
-        help="GitHub Pages base URL, e.g. https://user.github.io/bibwatch-data",
+        help="Public Pages base URL, e.g. https://user.github.io (not the private data repo)",
+    )
+    p_run.add_argument(
+        "--pages-root",
+        type=Path,
+        default=None,
+        help="Public Pages checkout that can host feeds/ (or BIBWATCH_PAGES). Free GitHub cannot serve Pages from a private repo.",
     )
 
     sub.add_parser("doctor", help="Validate data dir and RSS output")
@@ -78,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
                 dry_run=args.dry_run,
                 max_items=args.max_items,
                 site_base=args.site_base,
+                pages_root=args.pages_root,
             )
             for err in result.errors:
                 print(f"error: {err}", file=sys.stderr)
