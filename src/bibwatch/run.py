@@ -7,7 +7,7 @@ from pathlib import Path
 
 from bibwatch.enrich import enrich_paper
 from bibwatch.models import Paper
-from bibwatch.paths import feed_token
+from bibwatch.paths import feed_token, resolve_feed_root
 from bibwatch.poll import poll_watch_feeds
 from bibwatch.publish import publish_feed
 from bibwatch.rss import build_rss, write_feed
@@ -75,7 +75,7 @@ def build_feed(root: Path, *, max_items: int = 200, site_base: str | None = None
     if site_base:
         feed_link = f"{site_base.rstrip('/')}/feeds/{token}/all.xml"
     else:
-        feed_link = f"https://example.github.io/bibwatch/feeds/{token}/all.xml"
+        feed_link = f"https://example.github.io/bibwatch-feed/feeds/{token}/all.xml"
     return build_rss(
         papers,
         feed_title="Bibwatch Feed",
@@ -91,6 +91,7 @@ def run_all(
     dry_run: bool = False,
     max_items: int = 200,
     site_base: str | None = None,
+    feed_root: Path | None = None,
 ) -> RunResult:
     errors: list[str] = []
     new_papers, poll_errors = poll_new_papers(root, watch_id=watch_id, dry_run=dry_run)
@@ -102,7 +103,7 @@ def run_all(
     feed_path = None
     if not dry_run:
         xml = build_feed(root, max_items=max_items, site_base=site_base)
-        feed_path = publish_feed(root, xml)
+        feed_path = publish_feed(root, xml, feed_root=resolve_feed_root(feed_root))
 
     total = len(list_papers(root, limit=max_items))
     return RunResult(new_count=len(new_papers), total_in_feed=total, feed_path=feed_path, errors=errors)

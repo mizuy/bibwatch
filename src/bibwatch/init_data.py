@@ -49,8 +49,8 @@ def init_data_root(root: Path, *, feed_token: str | None = None) -> Path:
     readme = root / "README.md"
     if not readme.exists():
         readme.write_text(
-            "# bibwatch-data\n\nPrivate watches and feed output for [bibwatch](https://github.com/mizuy/bibwatch).\n"
-            "Enable GitHub Pages from `/docs` on this **private** repo.\n",
+            "# bibwatch-data\n\nPrivate watches and state for [bibwatch](https://github.com/mizuy/bibwatch).\n"
+            "Publish RSS from a **public** `bibwatch-feed` repo (GitHub Pages `/docs`).\n",
             encoding="utf-8",
         )
 

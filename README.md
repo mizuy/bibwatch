@@ -2,14 +2,17 @@
 
 研究テーマを watch し、新着論文を enrich（雑誌・所属・国）→ abstract 訳 → **RSS** で配信する CLI。
 
-**Bibliome とは完全独立。** ロジックはこの public repo、設定と feed は private **`bibwatch-data`** repo。
+**Bibliome とは完全独立。** ロジックはこの public repo、設定は private **`bibwatch-data`**、RSS は public **`bibwatch-feed`**。
 
 ## 構成
 
 | repo | 公開 | 内容 |
 |------|------|------|
 | **bibwatch** (この repo) | public | CLI・enrich・RSS 生成 |
-| **bibwatch-data** | private | `watches/`, `state/`, `docs/feeds/<UUID>/` |
+| **bibwatch-data** | private | `watches/`, `state/`（Pages は使わない） |
+| **bibwatch-feed** | public | `docs/feeds/<UUID>/all.xml`（GitHub Pages） |
+
+GitHub の無料プランは **private repo に Pages を置けない**。feed XML だけ public の `bibwatch-feed` へ出す。
 
 ## インストール
 
@@ -31,23 +34,29 @@ uv run bibwatch init
 ```bash
 cd bibwatch-data
 export BIBWATCH_DATA=$PWD
+export BIBWATCH_FEED=/path/to/bibwatch-feed
 # または state/feed-token と DEEPL_API_KEY を Secrets に
 
 uv run bibwatch watch list
 uv run bibwatch poll --dry-run
-uv run bibwatch run --site-base https://<user>.github.io/bibwatch-data
+uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed
 uv run bibwatch doctor
 ```
 
 ## RSS 配信
 
-1. `bibwatch-data` を **private repo** にする
-2. GitHub Pages: `main` / **`/docs`**
-3. feed URL（Inoreader 等）:
+1. `bibwatch-data` は **private**（watch 定義・seen・papers）
+2. `bibwatch-feed` は **public**。`BIBWATCH_FEED` / `--feed-root` をその checkout に向ける
+3. GitHub Pages: `bibwatch-feed` の Settings → Pages → `main` / `/docs`
+4. feed URL（Inoreader 等）:
 
-   `https://<user>.github.io/bibwatch-data/feeds/<UUID>/all.xml`
+   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/all.xml`
 
-   UUID は `state/feed-token`（README に書かない）
+   UUID は `state/feed-token`（README 本文には書かない）
+
+Pages を付ける前でも raw で購読できる。
+
+`https://raw.githubusercontent.com/<user>/bibwatch-feed/main/docs/feeds/<UUID>/all.xml`
 
 ## RSS アイテム
 
@@ -60,12 +69,12 @@ watch 名は RSS に出しません。
 
 ## Cursor Automation
 
-private `bibwatch-data` repo に Automation を設定:
+private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 
 - cron: 1日1回
 - install: `uv sync`
-- 実行: `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-data`
-- push: `docs/`, `state/`
+- 実行: `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed`
+- push: data 側は `docs/`, `state/`。`bibwatch-feed` は `docs/feeds/`
 
 詳細: `skills/bibwatch-run/SKILL.md`
 
@@ -74,6 +83,7 @@ private `bibwatch-data` repo に Automation を設定:
 | Variable | Meaning |
 |----------|---------|
 | `BIBWATCH_DATA` | data ルート（未設定時 cwd） |
+| `BIBWATCH_FEED` | public `bibwatch-feed` checkout（`docs/feeds/<UUID>/all.xml` を書く） |
 | `BIBWATCH_FEED_TOKEN` | feed UUID（未設定時 `state/feed-token`） |
 | `DEEPL_API_KEY` | abstract 翻訳（任意） |
 | `NCBI_API_KEY` | PubMed enrich（任意） |
@@ -86,5 +96,12 @@ state/seen.jsonl
 state/papers/
 state/translations/
 state/feed-token
-docs/feeds/<UUID>/all.xml
+docs/feeds/<UUID>/all.xml   # ローカル控え
+```
+
+## Layout (bibwatch-feed)
+
+```text
+docs/.nojekyll
+docs/feeds/<UUID>/all.xml   # GitHub Pages で公開
 ```

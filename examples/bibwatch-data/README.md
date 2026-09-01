@@ -1,25 +1,26 @@
 # bibwatch-data
 
-Private watches and RSS output. Pair with public [bibwatch](https://github.com/mizuy/bibwatch).
+Private watches and state. Pair with public [bibwatch](https://github.com/mizuy/bibwatch) and public [bibwatch-feed](https://github.com/mizuy/bibwatch-feed).
 
 ## Setup
 
 1. Create **private** GitHub repo `bibwatch-data`
-2. Copy this directory layout
-3. `uv sync`
-4. `uv run bibwatch init`
-5. Add watches under `watches/`
-6. GitHub Pages: Settings → Pages → `/docs`
+2. Create **public** GitHub repo `bibwatch-feed`
+3. Copy this directory layout
+4. `uv sync`
+5. `uv run bibwatch init`
+6. Add watches under `watches/`
+7. GitHub Pages: on **bibwatch-feed**, Settings → Pages → `main` / `/docs`
 
 ## Feed URL
 
-After `bibwatch run`:
+After `bibwatch run` with `BIBWATCH_FEED` pointing at the `bibwatch-feed` checkout:
 
 ```
-https://<user>.github.io/bibwatch-data/feeds/<token>/all.xml
+https://<user>.github.io/bibwatch-feed/feeds/<token>/all.xml
 ```
 
-`<token>` = contents of `state/feed-token` (do not commit to public docs)
+`<token>` = contents of `state/feed-token` (do not put the full URL in public README)
 
 ## Automation
 

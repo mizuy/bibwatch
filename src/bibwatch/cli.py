@@ -18,6 +18,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="bibwatch", description="Research literature watch → RSS")
     parser.add_argument("--version", action="version", version=f"bibwatch {__version__}")
     parser.add_argument("--data", type=Path, default=None, help="bibwatch-data root (or BIBWATCH_DATA / cwd)")
+    parser.add_argument(
+        "--feed-root",
+        type=Path,
+        default=None,
+        help="Public bibwatch-feed checkout (or BIBWATCH_FEED). Writes docs/feeds/<token>/all.xml there.",
+    )
 
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -37,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument(
         "--site-base",
         default=None,
-        help="GitHub Pages base URL, e.g. https://user.github.io/bibwatch-data",
+        help="GitHub Pages base URL, e.g. https://user.github.io/bibwatch-feed",
     )
 
     sub.add_parser("doctor", help="Validate data dir and RSS output")
@@ -78,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
                 dry_run=args.dry_run,
                 max_items=args.max_items,
                 site_base=args.site_base,
+                feed_root=args.feed_root,
             )
             for err in result.errors:
                 print(f"error: {err}", file=sys.stderr)
@@ -87,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if not result.errors else 1
 
         if args.command == "doctor":
-            issues = run_doctor(data)
+            issues = run_doctor(data, feed_root=args.feed_root)
             if issues:
                 for i in issues:
                     print(f"issue: {i}", file=sys.stderr)

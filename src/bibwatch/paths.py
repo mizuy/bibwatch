@@ -7,6 +7,7 @@ from pathlib import Path
 
 ENV_DATA_ROOT = "BIBWATCH_DATA"
 ENV_FEED_TOKEN = "BIBWATCH_FEED_TOKEN"
+ENV_FEED_ROOT = "BIBWATCH_FEED"
 
 
 def resolve_data_root(explicit: Path | None = None) -> Path:
@@ -61,3 +62,18 @@ def feed_token(root: Path) -> str:
 
 def feed_publish_dir(root: Path) -> Path:
     return docs_dir(root) / "feeds" / feed_token(root)
+
+
+def resolve_feed_root(explicit: Path | None = None) -> Path | None:
+    """Public bibwatch-feed checkout. Private data repos cannot host GitHub Pages on the free plan."""
+    if explicit is not None:
+        return explicit.expanduser().resolve()
+    env = os.environ.get(ENV_FEED_ROOT, "").strip()
+    if env:
+        return Path(env).expanduser().resolve()
+    return None
+
+
+def public_feed_dir(feed_root: Path, root: Path) -> Path:
+    """docs/feeds/<token>/ under the public feed repo (GitHub Pages /docs)."""
+    return feed_root.expanduser().resolve() / "docs" / "feeds" / feed_token(root)

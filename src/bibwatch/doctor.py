@@ -5,11 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from bibwatch.paths import feed_publish_dir, feed_token, watches_dir
+from bibwatch.paths import (
+    feed_publish_dir,
+    feed_token,
+    public_feed_dir,
+    resolve_feed_root,
+    watches_dir,
+)
 from bibwatch.watch import list_watch_files
 
 
-def run_doctor(root: Path) -> list[str]:
+def run_doctor(root: Path, *, feed_root: Path | None = None) -> list[str]:
     issues: list[str] = []
 
     if not watches_dir(root).is_dir():
@@ -34,5 +40,18 @@ def run_doctor(root: Path) -> list[str]:
         issues.append(f"invalid RSS XML: {e}")
     except FileNotFoundError as e:
         issues.append(str(e))
+
+    dest = resolve_feed_root(feed_root)
+    if dest is not None:
+        try:
+            public_path = public_feed_dir(dest, root) / "all.xml"
+            if public_path.is_file():
+                ET.parse(public_path)
+            else:
+                issues.append(f"public feed not found: {public_path} (set BIBWATCH_FEED and run `bibwatch run`)")
+        except ET.ParseError as e:
+            issues.append(f"invalid public RSS XML: {e}")
+        except FileNotFoundError as e:
+            issues.append(str(e))
 
     return issues
