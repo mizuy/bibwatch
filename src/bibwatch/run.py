@@ -196,16 +196,12 @@ def run_all(
 
     feed_path = None
     feed_paths: list[Path] = []
-    dest = resolve_feed_root(feed_root)
-    specs = load_feeds(root)
     if not dry_run:
-        for spec in specs:
-            xml = build_named_feed(root, spec, site_base=site_base, max_items=max_items)
-            path = publish_feed(root, xml, filename=spec.filename, feed_root=dest)
-            feed_paths.append(path)
-            if feed_path is None:
-                feed_path = path
+        feed_path, feed_paths = publish_all_feeds(
+            root, max_items=max_items, site_base=site_base, feed_root=feed_root
+        )
 
+    specs = load_feeds(root)
     primary = specs[0] if specs else DEFAULT_FEEDS[0]
     total = len(papers_for_feed(root, primary, max_items=max_items))
     return RunResult(
@@ -215,3 +211,22 @@ def run_all(
         errors=errors,
         feed_paths=feed_paths,
     )
+
+
+def publish_all_feeds(
+    root: Path,
+    *,
+    max_items: int | None = None,
+    site_base: str | None = None,
+    feed_root: Path | None = None,
+) -> tuple[Path | None, list[Path]]:
+    dest = resolve_feed_root(feed_root)
+    feed_path = None
+    feed_paths: list[Path] = []
+    for spec in load_feeds(root):
+        xml = build_named_feed(root, spec, site_base=site_base, max_items=max_items)
+        path = publish_feed(root, xml, filename=spec.filename, feed_root=dest)
+        feed_paths.append(path)
+        if feed_path is None:
+            feed_path = path
+    return feed_path, feed_paths

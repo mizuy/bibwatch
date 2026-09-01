@@ -35,11 +35,13 @@ uv run bibwatch init
 cd bibwatch-data
 export BIBWATCH_DATA=$PWD
 export BIBWATCH_FEED=/path/to/bibwatch-feed
-# または state/feed-token と DEEPL_API_KEY を Secrets に
+# または state/feed-token を Secrets に
 
 uv run bibwatch watch list
 uv run bibwatch poll --dry-run
 uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed
+uv run bibwatch translate list
+uv run bibwatch publish --site-base https://<user>.github.io/bibwatch-feed
 uv run bibwatch doctor
 ```
 
@@ -65,7 +67,7 @@ Pages を付ける前でも raw で購読できる。
 | フィールド | 方針 |
 |------------|------|
 | `<title>` | 論文タイトル（原文） / 雑誌 / 年月 |
-| `<description>` | 掲載誌（IF 2025）・著者・所属・国 + 訳アブスト + 原文 |
+| `<description>` | 掲載誌（IF 2025）・著者・所属・国 + 訳アブスト（エージェント） + 原文 |
 
 watch 名は RSS アイテムに出しません。`journals.yaml` がある場合、指定誌を **priority.xml** に出し、`all.xml` では指定誌を先に並べます（他誌も残す）。追加の名前付き feed は `feeds.yaml` で定義します（watch の絞り込み・別ジャーナル表・`listed_only`）。
 
@@ -75,7 +77,7 @@ private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 
 - cron: 1日1回
 - install: `uv sync`
-- 実行: `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed`
+- 実行: `uv run bibwatch run` → 新規要旨を日本語訳 → `translate apply` → `publish`
 - push: data 側は `docs/`, `state/`。`bibwatch-feed` は `docs/feeds/`
 
 詳細: `skills/bibwatch-run/SKILL.md`
@@ -87,7 +89,6 @@ private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 | `BIBWATCH_DATA` | data ルート（未設定時 cwd） |
 | `BIBWATCH_FEED` | public `bibwatch-feed` checkout（`docs/feeds/<UUID>/all.xml` を書く） |
 | `BIBWATCH_FEED_TOKEN` | feed UUID（未設定時 `state/feed-token`） |
-| `DEEPL_API_KEY` | abstract 翻訳（任意） |
 | `NCBI_API_KEY` | PubMed enrich（任意） |
 
 ## Layout (bibwatch-data)

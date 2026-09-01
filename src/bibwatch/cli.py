@@ -10,7 +10,13 @@ from bibwatch import __version__
 from bibwatch.doctor import run_doctor
 from bibwatch.init_data import init_data_root
 from bibwatch.paths import resolve_data_root
-from bibwatch.run import poll_new_papers, run_all
+from bibwatch.run import poll_new_papers, publish_all_feeds, run_all
+from bibwatch.translate import (
+    apply_abstract_translation,
+    apply_translations_file,
+    papers_needing_translation,
+    pending_payload,
+)
 from bibwatch.watch import list_watch_files, load_watch
 
 
@@ -45,6 +51,21 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="GitHub Pages base URL, e.g. https://user.github.io/bibwatch-feed",
     )
+
+    p_tr = sub.add_parser("translate", help="List or apply Japanese abstract translations (agent, not DeepL)")
+    tr_sub = p_tr.add_subparsers(dest="translate_cmd", required=True)
+    p_tr_list = tr_sub.add_parser("list", help="Papers whose abstracts still need a Japanese translation")
+    p_tr_list.add_argument("--all", action="store_true", help="Include papers not currently in a named feed")
+    p_tr_list.add_argument("--json", action="store_true", help="JSON objects (id, title, journal, abstract)")
+    p_tr_set = tr_sub.add_parser("set", help="Set one paper's Japanese abstract (read from --ja-file or stdin)")
+    p_tr_set.add_argument("paper_id")
+    p_tr_set.add_argument("--ja-file", type=Path, default=None)
+    p_tr_apply = tr_sub.add_parser("apply", help="Apply a YAML file of translations")
+    p_tr_apply.add_argument("file", type=Path)
+
+    p_pub = sub.add_parser("publish", help="Rebuild RSS from stored papers (no poll)")
+    p_pub.add_argument("--max-items", type=int, default=None)
+    p_pub.add_argument("--site-base", default=None)
 
     sub.add_parser("doctor", help="Validate data dir and RSS output")
 
@@ -92,6 +113,42 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"feed: {path}")
             print(f"new: {result.new_count}, total: {result.total_in_feed}")
             return 0 if not result.errors else 1
+
+        if args.command == "translate":
+            if args.translate_cmd == "list":
+                pending = papers_needing_translation(data, in_feeds=not args.all)
+                if args.json:
+                    import json
+
+                    json.dump([pending_payload(p) for p in pending], sys.stdout, ensure_ascii=False, indent=2)
+                    sys.stdout.write("\n")
+                else:
+                    for p in pending:
+                        print(f"{p.id}\t{(p.title or '')[:80]}")
+                    print(f"{len(pending)} pending", file=sys.stderr)
+                return 0
+            if args.translate_cmd == "set":
+                ja = args.ja_file.read_text(encoding="utf-8") if args.ja_file else sys.stdin.read()
+                paper = apply_abstract_translation(data, args.paper_id, ja)
+                print(paper.id)
+                return 0
+            if args.translate_cmd == "apply":
+                applied = apply_translations_file(data, args.file)
+                for paper_id in applied:
+                    print(paper_id)
+                print(f"{len(applied)} applied", file=sys.stderr)
+                return 0
+
+        if args.command == "publish":
+            feed_path, feed_paths = publish_all_feeds(
+                data,
+                max_items=args.max_items,
+                site_base=args.site_base,
+                feed_root=args.feed_root,
+            )
+            for path in feed_paths or ([feed_path] if feed_path else []):
+                print(f"feed: {path}")
+            return 0
 
         if args.command == "doctor":
             issues = run_doctor(data, feed_root=args.feed_root)

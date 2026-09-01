@@ -10,7 +10,7 @@ feeds:
 
 translate:
   target: ja
-  provider: deepl
+  provider: agent
 
 rss:
   max_items: 200

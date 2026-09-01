@@ -13,19 +13,38 @@ description: >-
 2. `watches/*.yaml` configured
 3. Optional `feeds.yaml` — named RSS files (default: `all.xml` + `priority.xml`)
 4. Optional `journals.yaml` / `journals/*.yaml` — listed journals go to `priority.xml` and sort first in `all.xml`
-5. Secrets: `DEEPL_API_KEY` (optional), `BIBWATCH_FEED_TOKEN` or `state/feed-token`
+5. Secrets: `BIBWATCH_FEED_TOKEN` or `state/feed-token`
 6. Public feed checkout via `BIBWATCH_FEED` or `--feed-root` (sibling `bibwatch-feed` if present)
 
 ## Steps
 
 1. `uv run bibwatch doctor` — fix blockers if any
 2. `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed`
-3. If data `docs/` or `state/` changed: commit and push **bibwatch-data** `main`
-4. If public `docs/feeds/` changed: commit and push **bibwatch-feed**
-5. Report: new paper count, feed path (do **not** log full secret URL in public artifacts)
+3. `uv run bibwatch translate list --json` — abstracts still missing Japanese
+4. **Translate those abstracts yourself** (Japanese, medical tone). Do **not** translate titles. Do **not** call DeepL.
+5. Write a YAML file and apply:
+
+   ```bash
+   uv run bibwatch translate apply /tmp/translations.yaml
+   uv run bibwatch publish --site-base https://<user>.github.io/bibwatch-feed
+   ```
+
+   YAML shape:
+
+   ```yaml
+   translations:
+     - id: doi:10.example/x
+       ja: |
+         日本語の要旨。
+   ```
+
+6. If data `docs/` or `state/` changed: commit and push **bibwatch-data** `main`
+7. If public `docs/feeds/` changed: commit and push **bibwatch-feed**
+8. Report: new paper count, how many abstracts were translated, feed path (do **not** log full secret URL in public artifacts)
 
 ## Do not
 
 - Change watch definitions unless asked
 - Translate paper titles (abstract only)
+- Use DeepL or any external translation API
 - Expose watch theme names in commit messages or RSS categories
