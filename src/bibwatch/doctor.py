@@ -5,9 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from bibwatch.journals import load_journal_catalog
 from bibwatch.paths import (
     feed_publish_dir,
     feed_token,
+    journals_path,
     public_feed_dir,
     resolve_feed_root,
     watches_dir,
@@ -40,6 +42,14 @@ def run_doctor(root: Path, *, feed_root: Path | None = None) -> list[str]:
         issues.append(f"invalid RSS XML: {e}")
     except FileNotFoundError as e:
         issues.append(str(e))
+
+    if journals_path(root).is_file():
+        try:
+            catalog = load_journal_catalog(root) or []
+            if not catalog:
+                issues.append("journals.yaml has no journals")
+        except Exception as e:
+            issues.append(f"invalid journals.yaml: {e}")
 
     dest = resolve_feed_root(feed_root)
     if dest is not None:

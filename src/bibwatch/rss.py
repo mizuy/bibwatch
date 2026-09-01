@@ -8,6 +8,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from bibwatch.journals import ListedJournal, match_journal
 from bibwatch.models import Paper
 
 
@@ -35,7 +36,16 @@ def _item_link(paper: Paper) -> str:
     return paper.urls.get("pdf", "https://example.invalid/")
 
 
-def _description_html(paper: Paper) -> str:
+def _if_label(listed: ListedJournal | None) -> str | None:
+    if listed is None or listed.if_2025 is None:
+        return None
+    text = f"IF 2025 {listed.if_2025:g}"
+    if listed.if_2025_flag:
+        text += listed.if_2025_flag
+    return text
+
+
+def _description_html(paper: Paper, listed: ListedJournal | None = None) -> str:
     parts: list[str] = ['<div class="paper-meta">']
 
     parts.append('<section class="journal"><h4>掲載誌</h4>')
@@ -54,6 +64,9 @@ def _description_html(paper: Paper) -> str:
             meta_bits.append(f"No.{html.escape(j.issue)}")
         if j.issn:
             meta_bits.append(f"ISSN {html.escape(j.issn)}")
+        if_bit = _if_label(listed)
+        if if_bit:
+            meta_bits.append(html.escape(if_bit))
         if meta_bits:
             parts.append(f"<p>{' · '.join(meta_bits)}</p>")
     else:
@@ -101,7 +114,14 @@ def _description_html(paper: Paper) -> str:
     return "".join(parts)
 
 
-def build_rss(papers: list[Paper], *, feed_title: str, feed_link: str, feed_description: str) -> str:
+def build_rss(
+    papers: list[Paper],
+    *,
+    feed_title: str,
+    feed_link: str,
+    feed_description: str,
+    journal_catalog: list[ListedJournal] | None = None,
+) -> str:
     rss = ET.Element("rss", version="2.0")
     channel = ET.SubElement(rss, "channel")
     ET.SubElement(channel, "title").text = feed_title
@@ -116,7 +136,7 @@ def build_rss(papers: list[Paper], *, feed_title: str, feed_link: str, feed_desc
         ET.SubElement(item, "guid", attrib={"isPermaLink": "false"}).text = paper.id
         ET.SubElement(item, "pubDate").text = _pub_date(paper)
         desc = ET.SubElement(item, "description")
-        desc.text = _description_html(paper)
+        desc.text = _description_html(paper, match_journal(paper, journal_catalog))
 
     ET.indent(rss, space="  ")
     body = ET.tostring(rss, encoding="unicode", xml_declaration=False)

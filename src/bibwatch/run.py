@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from bibwatch.enrich import enrich_paper
+from bibwatch.journals import filter_listed_papers, load_journal_catalog, match_journal
 from bibwatch.models import Paper
 from bibwatch.paths import feed_token, resolve_feed_root
 from bibwatch.poll import poll_watch_feeds
@@ -58,10 +59,12 @@ def poll_new_papers(root: Path, *, watch_id: str | None = None, dry_run: bool = 
 
 
 def ingest_papers(root: Path, papers: list[Paper], *, dry_run: bool = False) -> list[Paper]:
+    catalog = load_journal_catalog(root)
     ingested: list[Paper] = []
     for paper in papers:
         paper = enrich_paper(paper)
-        paper = translate_paper_abstract(root, paper)
+        if catalog is None or match_journal(paper, catalog) is not None:
+            paper = translate_paper_abstract(root, paper)
         if not dry_run:
             save_paper(root, paper)
             mark_seen(root, paper)
@@ -69,8 +72,15 @@ def ingest_papers(root: Path, papers: list[Paper], *, dry_run: bool = False) -> 
     return ingested
 
 
+def listed_feed_papers(root: Path, *, max_items: int = 200) -> list[Paper]:
+    catalog = load_journal_catalog(root)
+    papers = filter_listed_papers(list_papers(root), catalog)
+    return papers[:max_items]
+
+
 def build_feed(root: Path, *, max_items: int = 200, site_base: str | None = None) -> str:
-    papers = list_papers(root, limit=max_items)
+    papers = listed_feed_papers(root, max_items=max_items)
+    catalog = load_journal_catalog(root)
     token = feed_token(root)
     if site_base:
         feed_link = f"{site_base.rstrip('/')}/feeds/{token}/all.xml"
@@ -81,6 +91,7 @@ def build_feed(root: Path, *, max_items: int = 200, site_base: str | None = None
         feed_title="Bibwatch Feed",
         feed_link=feed_link,
         feed_description="Research literature watch feed",
+        journal_catalog=catalog,
     )
 
 
@@ -105,5 +116,5 @@ def run_all(
         xml = build_feed(root, max_items=max_items, site_base=site_base)
         feed_path = publish_feed(root, xml, feed_root=resolve_feed_root(feed_root))
 
-    total = len(list_papers(root, limit=max_items))
+    total = len(listed_feed_papers(root, max_items=max_items))
     return RunResult(new_count=len(new_papers), total_in_feed=total, feed_path=feed_path, errors=errors)

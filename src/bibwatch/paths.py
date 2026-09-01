@@ -23,6 +23,10 @@ def watches_dir(root: Path) -> Path:
     return root / "watches"
 
 
+def journals_path(root: Path) -> Path:
+    return root / "journals.yaml"
+
+
 def state_dir(root: Path) -> Path:
     return root / "state"
 

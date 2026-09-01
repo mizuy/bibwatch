@@ -9,7 +9,7 @@
 | repo | 公開 | 内容 |
 |------|------|------|
 | **bibwatch** (この repo) | public | CLI・enrich・RSS 生成 |
-| **bibwatch-data** | private | `watches/`, `state/`（Pages は使わない） |
+| **bibwatch-data** | private | `watches/`, `journals.yaml`, `state/`（Pages は使わない） |
 | **bibwatch-feed** | public | `docs/feeds/<UUID>/all.xml`（GitHub Pages） |
 
 GitHub の無料プランは **private repo に Pages を置けない**。feed XML だけ public の `bibwatch-feed` へ出す。
@@ -63,9 +63,9 @@ Pages を付ける前でも raw で購読できる。
 | フィールド | 方針 |
 |------------|------|
 | `<title>` | 論文タイトル（**原文**） |
-| `<description>` | 掲載誌・所属・国 + 訳アブスト + 原文 |
+| `<description>` | 掲載誌（IF 2025）・所属・国 + 訳アブスト + 原文 |
 
-watch 名は RSS に出しません。
+watch 名は RSS に出しません。`journals.yaml` がある場合、**指定ジャーナルだけ**を RSS に出します（プレプリントは含めない）。
 
 ## Cursor Automation
 
@@ -92,6 +92,7 @@ private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 
 ```text
 watches/*.yaml
+journals.yaml               # 指定ジャーナル（無い場合は全件）
 state/seen.jsonl
 state/papers/
 state/translations/

@@ -11,8 +11,9 @@ description: >-
 
 1. cwd or `BIBWATCH_DATA` points at **bibwatch-data** (private repo)
 2. `watches/*.yaml` configured
-3. Secrets: `DEEPL_API_KEY` (optional), `BIBWATCH_FEED_TOKEN` or `state/feed-token`
-4. Public feed checkout via `BIBWATCH_FEED` or `--feed-root` (sibling `bibwatch-feed` if present)
+3. Optional `journals.yaml` allowlist — if present, RSS includes only those journals
+4. Secrets: `DEEPL_API_KEY` (optional), `BIBWATCH_FEED_TOKEN` or `state/feed-token`
+5. Public feed checkout via `BIBWATCH_FEED` or `--feed-root` (sibling `bibwatch-feed` if present)
 
 ## Steps
 
