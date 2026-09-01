@@ -1,6 +1,6 @@
 ## Automation: 新規文献 ingest
 
-定期実行は Cursor Automation（親 repo の `AUTOMATION.md`）。cron は 3 repo 環境が必要。
+定期実行は Cursor Automation（親 repo の `AUTOMATION.md`）。作成画面で No repository をやめ、bibwatch / bibwatch-data / bibwatch-feed の 3 つを選ぶ。
 
 1. `export BIBWATCH_FEED="${BIBWATCH_FEED:-$PWD/../bibwatch-feed}"`
 2. `uv run bibwatch run --site-base https://<user>.github.io/bibwatch-feed`（`feeds.yaml` の各 XML。未定義時は `all.xml` + `priority.xml`）

@@ -7,7 +7,7 @@ description: >-
 
 # Bibwatch run
 
-Daily scheduled runs: see `AUTOMATION.md` (Cursor Automation + paste-ready prompt).
+Daily scheduled runs: see `AUTOMATION.md`. On the Automation form, do not leave Repository as No repository — select the three GitHub repos.
 
 ## Prerequisites
 
