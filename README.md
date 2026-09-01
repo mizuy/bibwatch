@@ -50,7 +50,8 @@ uv run bibwatch doctor
 3. GitHub Pages: `bibwatch-feed` の Settings → Pages → `main` / `/docs`
 4. feed URL（Inoreader 等）:
 
-   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/all.xml`
+   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/all.xml`  
+   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/priority.xml`（指定誌）
 
    UUID は `state/feed-token`（README 本文には書かない）
 
@@ -65,7 +66,7 @@ Pages を付ける前でも raw で購読できる。
 | `<title>` | 論文タイトル（**原文**） |
 | `<description>` | 掲載誌（IF 2025）・所属・国 + 訳アブスト + 原文 |
 
-watch 名は RSS に出しません。`journals.yaml` がある場合、**指定ジャーナルだけ**を RSS に出します（プレプリントは含めない）。
+watch 名は RSS に出しません。`journals.yaml` がある場合、指定誌を **priority.xml** に出し、`all.xml` では指定誌を先に並べます（他誌も残す）。
 
 ## Cursor Automation
 
@@ -92,7 +93,7 @@ private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 
 ```text
 watches/*.yaml
-journals.yaml               # 指定ジャーナル（無い場合は全件）
+journals.yaml               # 優先ジャーナル（all + priority）
 state/seen.jsonl
 state/papers/
 state/translations/

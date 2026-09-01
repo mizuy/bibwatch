@@ -6,6 +6,7 @@ from bibwatch.journals import (
     load_journal_catalog,
     match_journal,
     normalize_journal_name,
+    prioritize_papers,
 )
 from bibwatch.models import Journal, Paper
 from bibwatch.rss import build_rss
@@ -87,4 +88,22 @@ def test_rss_includes_impact_factor():
         journal_catalog=catalog,
     )
     assert "IF 2025 11.8" in xml
+    assert "優先誌" in xml
     assert "Diagnostics" not in xml
+
+
+def test_prioritize_listed_first_by_if():
+    catalog = [
+        ListedJournal(name="Endoscopy", if_2025=11.8),
+        ListedJournal(name="Gut", if_2025=24.6),
+    ]
+    papers = [
+        _paper("Diagnostics", paper_id="doi:diag"),
+        _paper("Endoscopy", paper_id="doi:endo"),
+        _paper("Gut", paper_id="doi:gut"),
+    ]
+    papers[0].journal.published = "2026-08-01"
+    papers[1].journal.published = "2026-08-02"
+    papers[2].journal.published = "2026-07-01"
+    ordered = prioritize_papers(papers, catalog)
+    assert [p.id for p in ordered] == ["doi:gut", "doi:endo", "doi:diag"]

@@ -55,6 +55,8 @@ def _description_html(paper: Paper, listed: ListedJournal | None = None) -> str:
         line = f"<p><strong>{html.escape(jtype)}</strong>"
         if j.published:
             line += f" ({html.escape(str(j.published))})"
+        if listed:
+            line += " · <strong>優先誌</strong>"
         line += "</p>"
         parts.append(line)
         meta_bits = []

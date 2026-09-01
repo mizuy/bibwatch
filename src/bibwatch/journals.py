@@ -1,4 +1,4 @@
-"""Allowlist of journals for RSS (and optional ingest skip)."""
+"""Priority journal catalog for RSS ordering and labels."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import html
 import re
 import unicodedata
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -123,3 +124,27 @@ def filter_listed_papers(papers: list[Paper], catalog: list[ListedJournal] | Non
     if catalog is None:
         return papers
     return [p for p in papers if match_journal(p, catalog) is not None]
+
+
+def _paper_date_key(paper: Paper) -> float:
+    raw = paper.journal.published or paper.fetched_at or ""
+    try:
+        if len(raw) >= 10:
+            return datetime.fromisoformat(raw[:10]).timestamp()
+        if len(raw) == 4:
+            return datetime(int(raw), 1, 1).timestamp()
+    except (ValueError, TypeError):
+        return 0.0
+    return 0.0
+
+
+def prioritize_papers(papers: list[Paper], catalog: list[ListedJournal] | None) -> list[Paper]:
+    """Listed journals first (higher IF, then newer), then the rest by date."""
+
+    def sort_key(paper: Paper) -> tuple[int, float, float]:
+        listed = match_journal(paper, catalog) if catalog else None
+        pri = 0 if listed else 1
+        if_score = -(listed.if_2025 or 0.0) if listed else 0.0
+        return (pri, if_score, -_paper_date_key(paper))
+
+    return sorted(papers, key=sort_key)

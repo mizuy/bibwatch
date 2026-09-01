@@ -58,7 +58,12 @@ def run_doctor(root: Path, *, feed_root: Path | None = None) -> list[str]:
             if public_path.is_file():
                 ET.parse(public_path)
             else:
-                issues.append(f"public feed not found: {public_path} (set BIBWATCH_FEED and run `bibwatch run`)")
+                issues.append(
+                    f"public feed not found: {public_path} (set BIBWATCH_FEED and run `bibwatch run`)"
+                )
+            pri_path = public_feed_dir(dest, root) / "priority.xml"
+            if pri_path.is_file():
+                ET.parse(pri_path)
         except ET.ParseError as e:
             issues.append(f"invalid public RSS XML: {e}")
         except FileNotFoundError as e:

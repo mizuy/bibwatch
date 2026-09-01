@@ -10,6 +10,7 @@ import feedparser
 import httpx
 
 from bibwatch.models import Abstract, Journal, Paper
+from bibwatch.pubmed import poll_pubmed_search
 from bibwatch.store import normalize_doi, paper_id_from_ids
 
 
@@ -192,6 +193,9 @@ def parse_feed_entry(entry: Any, watch_id: str, feed: dict[str, str]) -> Paper:
 def poll_watch_feeds(watch_id: str, feeds: list[dict[str, str]]) -> list[Paper]:
     papers: list[Paper] = []
     for feed in feeds:
+        if feed.get("type") == "pubmed_search":
+            papers.extend(poll_pubmed_search(watch_id, feed))
+            continue
         url = feed.get("url")
         if not url:
             continue
