@@ -9,8 +9,8 @@
 | repo | 公開 | 内容 |
 |------|------|------|
 | **bibwatch** (この repo) | public | CLI・enrich・RSS 生成 |
-| **bibwatch-data** | private | `watches/`, `journals.yaml`, `state/`（Pages は使わない） |
-| **bibwatch-feed** | public | `docs/feeds/<UUID>/all.xml`（GitHub Pages） |
+| **bibwatch-data** | private | `watches/`, `feeds.yaml`, `journals.yaml`, `state/`（Pages は使わない） |
+| **bibwatch-feed** | public | `docs/feeds/<UUID>/*.xml`（GitHub Pages） |
 
 GitHub の無料プランは **private repo に Pages を置けない**。feed XML だけ public の `bibwatch-feed` へ出す。
 
@@ -51,7 +51,8 @@ uv run bibwatch doctor
 4. feed URL（Inoreader 等）:
 
    `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/all.xml`  
-   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/priority.xml`（指定誌）
+   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/priority.xml`（指定誌）  
+   ほか `feeds.yaml` で定義した `*.xml`（例: `major-gi.xml`）
 
    UUID は `state/feed-token`（README 本文には書かない）
 
@@ -66,7 +67,7 @@ Pages を付ける前でも raw で購読できる。
 | `<title>` | 論文タイトル（**原文**） |
 | `<description>` | 掲載誌（IF 2025）・所属・国 + 訳アブスト + 原文 |
 
-watch 名は RSS に出しません。`journals.yaml` がある場合、指定誌を **priority.xml** に出し、`all.xml` では指定誌を先に並べます（他誌も残す）。
+watch 名は RSS アイテムに出しません。`journals.yaml` がある場合、指定誌を **priority.xml** に出し、`all.xml` では指定誌を先に並べます（他誌も残す）。追加の名前付き feed は `feeds.yaml` で定義します（watch の絞り込み・別ジャーナル表・`listed_only`）。
 
 ## Cursor Automation
 
@@ -93,17 +94,19 @@ private `bibwatch-data` と public `bibwatch-feed` の両方を使う:
 
 ```text
 watches/*.yaml
+feeds.yaml                  # 名前付き RSS（省略時は all + priority）
 journals.yaml               # 優先ジャーナル（all + priority）
+journals/*.yaml             # feed ごとのジャーナル表（任意）
 state/seen.jsonl
 state/papers/
 state/translations/
 state/feed-token
-docs/feeds/<UUID>/all.xml   # ローカル控え
+docs/feeds/<UUID>/*.xml     # ローカル控え
 ```
 
 ## Layout (bibwatch-feed)
 
 ```text
 docs/.nojekyll
-docs/feeds/<UUID>/all.xml   # GitHub Pages で公開
+docs/feeds/<UUID>/*.xml     # GitHub Pages で公開
 ```

@@ -27,6 +27,10 @@ def journals_path(root: Path) -> Path:
     return root / "journals.yaml"
 
 
+def feeds_path(root: Path) -> Path:
+    return root / "feeds.yaml"
+
+
 def state_dir(root: Path) -> Path:
     return root / "state"
 

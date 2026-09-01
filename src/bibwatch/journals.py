@@ -16,6 +16,15 @@ from bibwatch.models import Paper
 from bibwatch.paths import journals_path
 
 
+def resolve_journals_path(root: Path, path: str | Path | None = None) -> Path:
+    if path is None:
+        return journals_path(root)
+    catalog = Path(path)
+    if catalog.is_absolute():
+        return catalog
+    return root / catalog
+
+
 @dataclass(frozen=True)
 class ListedJournal:
     name: str
@@ -89,18 +98,21 @@ def _from_dict(data: dict[str, Any]) -> ListedJournal:
     )
 
 
-def load_journal_catalog(root: Path) -> list[ListedJournal] | None:
-    """Return listed journals, or None if no allowlist file exists."""
-    path = journals_path(root)
-    if not path.is_file():
+def load_journal_catalog(root: Path, path: str | Path | None = None) -> list[ListedJournal] | None:
+    """Return listed journals, or None if no catalog file exists.
+
+    ``path`` is relative to ``root`` (or absolute). Omitted → ``journals.yaml``.
+    """
+    catalog_path = resolve_journals_path(root, path)
+    if not catalog_path.is_file():
         return None
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw = yaml.safe_load(catalog_path.read_text(encoding="utf-8")) or {}
     if isinstance(raw, list):
         rows = raw
     elif isinstance(raw, dict):
         rows = raw.get("journals") or []
     else:
-        raise ValueError(f"Invalid journals file: {path}")
+        raise ValueError(f"Invalid journals file: {catalog_path}")
     return [_from_dict(row) for row in rows]
 
 

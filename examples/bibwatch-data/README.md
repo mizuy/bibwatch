@@ -10,8 +10,9 @@ Private watches and state. Pair with public [bibwatch](https://github.com/mizuy/
 4. `uv sync`
 5. `uv run bibwatch init`
 6. Add watches under `watches/`
-7. Optional: `journals.yaml` (priority.xml + sort-first in all.xml)
-8. GitHub Pages: on **bibwatch-feed**, Settings → Pages → `main` / `/docs`
+7. Optional: `feeds.yaml` (named RSS files; default all.xml + priority.xml)
+8. Optional: `journals.yaml` (priority.xml + sort-first in all.xml)
+9. GitHub Pages: on **bibwatch-feed**, Settings → Pages → `main` / `/docs`
 
 ## Feed URL
 

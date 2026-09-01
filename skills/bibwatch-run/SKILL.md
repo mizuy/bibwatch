@@ -11,9 +11,10 @@ description: >-
 
 1. cwd or `BIBWATCH_DATA` points at **bibwatch-data** (private repo)
 2. `watches/*.yaml` configured
-3. Optional `journals.yaml` — listed journals go to `priority.xml` and sort first in `all.xml`
-4. Secrets: `DEEPL_API_KEY` (optional), `BIBWATCH_FEED_TOKEN` or `state/feed-token`
-5. Public feed checkout via `BIBWATCH_FEED` or `--feed-root` (sibling `bibwatch-feed` if present)
+3. Optional `feeds.yaml` — named RSS files (default: `all.xml` + `priority.xml`)
+4. Optional `journals.yaml` / `journals/*.yaml` — listed journals go to `priority.xml` and sort first in `all.xml`
+5. Secrets: `DEEPL_API_KEY` (optional), `BIBWATCH_FEED_TOKEN` or `state/feed-token`
+6. Public feed checkout via `BIBWATCH_FEED` or `--feed-root` (sibling `bibwatch-feed` if present)
 
 ## Steps
 

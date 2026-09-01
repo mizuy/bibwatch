@@ -22,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
         "--feed-root",
         type=Path,
         default=None,
-        help="Public bibwatch-feed checkout (or BIBWATCH_FEED). Writes docs/feeds/<token>/all.xml there.",
+        help="Public bibwatch-feed checkout (or BIBWATCH_FEED). Writes docs/feeds/<token>/*.xml there.",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run = sub.add_parser("run", help="poll + ingest + publish RSS")
     p_run.add_argument("--watch", default=None)
     p_run.add_argument("--dry-run", action="store_true")
-    p_run.add_argument("--max-items", type=int, default=200)
+    p_run.add_argument("--max-items", type=int, default=None, help="Override max items for every named feed")
     p_run.add_argument(
         "--site-base",
         default=None,
@@ -88,8 +88,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             for err in result.errors:
                 print(f"error: {err}", file=sys.stderr)
-            if result.feed_path:
-                print(f"feed: {result.feed_path}")
+            for path in result.feed_paths or ([result.feed_path] if result.feed_path else []):
+                print(f"feed: {path}")
             print(f"new: {result.new_count}, total: {result.total_in_feed}")
             return 0 if not result.errors else 1
 
