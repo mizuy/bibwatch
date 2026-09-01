@@ -1,0 +1,16 @@
+id: w-example
+title: "Example watch (replace with your theme)"
+enabled: false
+
+feeds:
+  - type: pubmed_rss
+    url: "https://pubmed.ncbi.nlm.nih.gov/rss/search/1Z8X9example/?limit=15&utm_campaign=pubmed-2&fc=2026-08-31"
+  - type: arxiv
+    url: "http://export.arxiv.org/rss/cs.AI"
+
+translate:
+  target: ja
+  provider: deepl
+
+rss:
+  max_items: 200

@@ -1,0 +1,10 @@
+[project]
+name = "bibwatch-data"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = [
+  "bibwatch @ git+https://github.com/mizuy/bibwatch",
+]
+
+[tool.uv]
+package = false
