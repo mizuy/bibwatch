@@ -13,6 +13,7 @@ from bibwatch.paths import feed_token, resolve_feed_root
 from bibwatch.poll import poll_watch_feeds
 from bibwatch.publish import publish_feed
 from bibwatch.rss import build_rss
+from bibwatch.site import PAGE_FILENAME, FeedPage, build_site
 from bibwatch.store import load_paper, load_seen, list_papers, mark_seen, save_paper
 from bibwatch.translate import translate_paper_abstract
 from bibwatch.watch import load_all_watches, load_watches, matches_require_tiab, paper_matches_watch
@@ -230,10 +231,17 @@ def publish_all_feeds(
     dest = resolve_feed_root(feed_root)
     feed_path = None
     feed_paths: list[Path] = []
+    pages: list[FeedPage] = []
     for spec in load_feeds(root):
         xml = build_named_feed(root, spec, site_base=site_base, max_items=max_items)
         path = publish_feed(root, xml, filename=spec.filename, feed_root=dest)
         feed_paths.append(path)
         if feed_path is None:
             feed_path = path
+        pages.append(
+            FeedPage(spec=spec, papers=papers_for_feed(root, spec, max_items=max_items), catalog=catalog_for_feed(root, spec))
+        )
+    if pages:
+        page_path = publish_feed(root, build_site(pages), filename=PAGE_FILENAME, feed_root=dest)
+        feed_paths.append(page_path)
     return feed_path, feed_paths

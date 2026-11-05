@@ -111,12 +111,15 @@ feeds:
     feed_repo = tmp_path / "bibwatch-feed"
     result = run_all(tmp_path, feed_root=feed_repo, site_base="https://example.github.io/bibwatch-feed")
     names = {p.name for p in result.feed_paths}
-    assert names == {"all.xml", "susa.xml"}
+    assert names == {"all.xml", "susa.xml", "index.html"}
     public = feed_repo / "docs" / "feeds" / "test-token-uuid-12345678"
     assert (public / "susa.xml").is_file()
     xml = (public / "susa.xml").read_text(encoding="utf-8")
     assert "<title>SuSA</title>" in xml
     assert "doi:susa" in xml
+    page = (public / "index.html").read_text(encoding="utf-8")
+    assert '"id":"susa"' in page
+    assert "doi:susa" in page
 
 
 def test_require_tiab_drops_single_token_hits(tmp_path: Path):
