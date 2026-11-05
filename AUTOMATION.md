@@ -99,4 +99,4 @@ Steps:
 - 初回は Automation 画面の **Run now** で一度回す
 - 成功: `bibwatch-data` と `bibwatch-feed` の `main` に `feed: YYYY-MM-DD (N new)` が載る
 - 新規ゼロかつ未訳なし: commit なしで終了してよい
-- Pages: `https://mizuy.github.io/bibwatch-feed/feeds/<token>/all.xml` ほか `feeds.yaml` の各 XML
+- Pages: `https://mizuy.github.io/bibwatch-feed/feeds/<token>/all.xml` ほか `feeds.yaml` の各 XML。ブラウザ用は `https://mizuy.github.io/bibwatch-feed/feeds/<token>/`（index.html）

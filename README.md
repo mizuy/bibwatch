@@ -58,6 +58,12 @@ uv run bibwatch doctor
 
    UUID は `state/feed-token`（README 本文には書かない）
 
+5. ブラウザで読む場合は同じフォルダの `index.html`:
+
+   `https://<user>.github.io/bibwatch-feed/feeds/<UUID>/`
+
+   全 feed をタブで切り替え、追加日ごとに並べる。要旨はタップで開く。前回訪問以降の論文に NEW 印が付く（既読はブラウザごとに保存。初回は直近 3 日を NEW とする）。`bibwatch publish` / `run` が XML と一緒に書き出す。
+
 Pages を付ける前でも raw で購読できる。
 
 `https://raw.githubusercontent.com/<user>/bibwatch-feed/main/docs/feeds/<UUID>/all.xml`
